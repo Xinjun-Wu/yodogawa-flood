@@ -98,7 +98,7 @@ class GenerateData():
 
             savename = os.path.join(self.OUTPUT_FOLDER, f'Step_{self.STEP}', case_name_Str+'.npz')
             np.savez(savename, learning_data=learning_data, teacher_data=teacher_data)
-            self.NPZ_COUNT += 1
+        self.NPZ_COUNT = case_id +1
 
 
     def run(self):
