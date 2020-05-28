@@ -159,8 +159,8 @@ class Map_style_DataSet(Data.Dataset):
         learning_data = case_data['learning_data']
         teacher_data = case_data['teacher_data']
 
-        X_Array = np.expand_dims(learning_data[sample_id], axis=0)
-        y_Array = np.expand_dims(teacher_data[sample_id], axis=0)
+        X_Array = learning_data[sample_id]
+        y_Array = teacher_data[sample_id]
 
         return X_Array, y_Array
 
@@ -201,8 +201,8 @@ class Tensor_DataSet(Data.TensorDataset):
         
 if __name__ == "__main__":
     mydataset = YodogawaDataSets()
-    data_info, trainsets = mydataset.select('train', 'tensorstyle')
-    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=1000, shuffle=True, num_workers = 0)
+    data_info, trainsets = mydataset.select('train', 'mapstyle')
+    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers =0)
 
     start_clock = time.time()
     start_total = start_clock
