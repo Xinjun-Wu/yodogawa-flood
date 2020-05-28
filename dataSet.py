@@ -34,6 +34,9 @@ class YodogawaDataSets():
 
 
     def _assign_case(self):
+        """
+        分配数据集
+        """
         casename_List = os.listdir(self.INPUT_FOLDER)
 
         self.N_CASE = len(casename_List)
@@ -84,7 +87,7 @@ class YodogawaDataSets():
         print(f'测试集的case为：{test_print}')
 
     
-    def select(self, data = 'train'):
+    def select(self, data='train', dataset_type='tensorstyle'):
 
         if data == 'train':
             selected_id = 0
@@ -120,17 +123,19 @@ class YodogawaDataSets():
                         'case_index_List' : case_index_List,
                         'case_path_List' : case_path_List
                         }
-
-        dataset = customizeDataSet_0(dataset_info)
+        if dataset_type == 'mapstyle':
+            dataset = Map_style_DataSet(dataset_info)
+        elif dataset_type == 'tensorstyle':
+            dataset = Tensor_DataSet(dataset_info)
 
         return dataset_info, dataset
 
 
 
 
-class customizeDataSet_0(Data.Dataset):
+class Map_style_DataSet(Data.Dataset):
     def __init__(self,info_Dict):
-        super(customizeDataSet_0).__init__()
+        super(Map_style_DataSet).__init__()
         self.N_CASE = info_Dict['n_case']
         self.N_SAMPLE_EACHCASE = info_Dict['n_sample_eachcase']
         self.N_SAMPLE_TOTAL = info_Dict['n_sample_total']
@@ -163,11 +168,41 @@ class customizeDataSet_0(Data.Dataset):
         return self.N_SAMPLE_TOTAL
     
 
+class Tensor_DataSet(Data.TensorDataset):
+    def __init__(self, info_Dict):
+        super(Tensor_DataSet).__init__()
+        self.N_CASE = info_Dict['n_case']
+        self.N_SAMPLE_EACHCASE = info_Dict['n_sample_eachcase']
+        self.N_SAMPLE_TOTAL = info_Dict['n_sample_total']
+        self.CASE_INDEX_LIST = info_Dict['case_index_List']
+        self.CASE_PATH_LIST = info_Dict['case_path_List']
+
+        X_Array_List = []
+        y_Array_List = []
+        for case_path in self.CASE_PATH_LIST:
+            case_data = np.load(case_path)            
+            learning_data = case_data['learning_data']
+            teacher_data = case_data['teacher_data']
+            X_Array_List.append(learning_data)
+            y_Array_List.append(teacher_data)
+
+        X_Array = np.concatenate(tuple(X_Array_List), axis=0)
+        y_Array = np.concatenate(tuple(y_Array_List), axis=0)
+
+        X_Tensor = torch.tensor(X_Array)
+        y_Tensor = torch.tensor(y_Array)
+
+        self.tensors = (X_Tensor, y_Tensor)
+
+    def __len__(self):
+        return int(self.N_CASE) * int(self.N_SAMPLE_EACHCASE)
+
+
         
 if __name__ == "__main__":
     mydataset = YodogawaDataSets()
-    data_info, trainsets = mydataset.select('train')
-    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers = 3)
+    data_info, trainsets = mydataset.select('train', 'tensorstyle')
+    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=1000, shuffle=True, num_workers = 0)
 
     start_clock = time.time()
     start_total = start_clock
