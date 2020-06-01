@@ -21,8 +21,9 @@ TVT_RATIO = [0.2, 0.1, 0.1]
 TEST_SPECIFIC = [10, 11]
 RANDOM_SEED = 120
 STEP_List = [6, 12, 18, 24, 30, 36]
+STEP_List = [6]
 CHECKPOINT = None
-CHECKPOINT = [6, 5] ###STEP == 6 , EPOCH == 5
+CHECKPOINT = [6, 10] ###STEP == 6 , EPOCH == 5
 CHECK_EACH_STEP = False
 
 if CHECKPOINT is not None:
@@ -49,7 +50,7 @@ for STEP in STEP_List:
     optimizer = optim.Adam(MyTrainAndTest.MODEL.parameters(), lr = LR, weight_decay = 1e-6)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, Train_lambda)
     TRAIN_PARAMS_DICT = {
-                        'EPOCHS' : 10,
+                        'EPOCHS' : 50,
                         'BATCHSIZES' : 144,
                         'LOSS_FN' : nn.L1Loss(),
                         'OPTIMIZER' : optimizer,
@@ -58,7 +59,7 @@ for STEP in STEP_List:
                         'RECORDER_SAVECYCLE' : 1,
                         'NUM_WORKERS' : 0,
                         'VALIDATION' : True,
-                        'VERBOSE' : 2,
+                        'VERBOSE' : 1,
                         'TRANSFER' : False,
                         'CHECK_OPTIMIZER' : True,
                         'CHECK_SCHEDULER' : True,

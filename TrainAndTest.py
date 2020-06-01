@@ -274,7 +274,7 @@ class TrainAndTest():
 
                 savepath = os.path.join(self.OUTPUT_FOLDER, 'test', f"model_V{self.READ_VERSION}_epoch_{CHECK_EPOCH}", f'{casename}.npz')
                 np.savez(savepath, input=Y_input_Array, output=Y_output_Array)
-                TEST_recorder_Dict[str(casename)] = loss.item()
+                TEST_recorder_Dict[str(casename)] = [loss.item()]
                 print(f'Model with epoch={CHECK_EPOCH} test loss in {casename} : {loss.item()}')
 
         return TEST_recorder_Dict
