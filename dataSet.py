@@ -7,12 +7,13 @@ import time
 import datetime
 
 class YodogawaDataSets():
-    def __init__(self, input_folder='../TrainData/Step_6/',
+    def __init__(self, step, input_folder='../TrainData/Step_6/',
                 tvt_ratio=[0.5,0.3,0.2], test_specific=[10, 11], random_seed=120):
         """
         数据将按照tvt_ratio的比例划分train,validdaton,test数据集,指定的test_specific必定在测试集内
 
         """
+        self.STEP = step
         self.INPUT_FOLDER = input_folder
         self.TVT_RATIO = tvt_ratio
         self.TEST_SPECIFIC = test_specific
