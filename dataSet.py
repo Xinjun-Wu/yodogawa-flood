@@ -194,6 +194,8 @@ class Tensor_DataSet(Data.TensorDataset):
         y_Tensor = torch.tensor(y_Array)
 
         self.tensors = (X_Tensor, y_Tensor)
+    def __getitem__(self, index):
+        return tuple(tensor[index] for tensor in self.tensors)
 
     def __len__(self):
         return int(self.N_CASE) * int(self.N_SAMPLE_EACHCASE)
@@ -201,9 +203,9 @@ class Tensor_DataSet(Data.TensorDataset):
 
         
 if __name__ == "__main__":
-    mydataset = YodogawaDataSets()
+    mydataset = YodogawaDataSets(6)
     data_info, trainsets = mydataset.select('train', 'mapstyle')
-    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers =0)
+    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers =3)
 
     start_clock = time.time()
     start_total = start_clock

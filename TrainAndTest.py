@@ -254,6 +254,7 @@ class TrainAndTest():
 
         ########################################  Test Case Loop  #######################################
         self.MODEL.eval()
+        self.MODEL.to(device)
         with torch.no_grad():
             for case_id, (X_tensor, Y_tensor) in enumerate(testloader):
 
