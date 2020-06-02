@@ -30,6 +30,16 @@ class TrainAndTest():
         self.SAVE_VERSION = save_version
         self.TRAIN_PARAMS_DICT = None
         self.TEST_PARAMS_DICT = None
+        self.DEVICE = None        
+
+        if torch.cuda.is_available():
+            self.DEVICE = torch.device('cuda')
+            print(' Runing on the GPU...')
+        else:
+            self.DEVICE = torch.device('cpu')
+            print(' Runing on the CPU...')
+
+        self.MODEL.to(self.DEVICE)
 
     def _register_checkpoint(self):
         CHECK_EPOCH = int(self.CHECKPOINT[-1])
@@ -54,6 +64,7 @@ class TrainAndTest():
         TRAIN_EPOCHS = self.TRAIN_PARAMS_DICT['EPOCHS']
         TRAIN_BATCHSIZES = self.TRAIN_PARAMS_DICT['BATCHSIZES']
         TRAIN_LOSS_FN = self.TRAIN_PARAMS_DICT['LOSS_FN']
+        TRAIN_LOSS_FN.to(self.DEVICE)
         TRAIN_OPTIMIZER = self.TRAIN_PARAMS_DICT['OPTIMIZER']
         TRAIN_SCHEDULER = self.TRAIN_PARAMS_DICT['SCHEDULER']
         TRAIN_MODEL_SAVECYCLE = self.TRAIN_PARAMS_DICT['MODEL_SAVECYCLE']
@@ -104,16 +115,9 @@ class TrainAndTest():
             validationloader = Data.DataLoader(dataset=validationdatasets, batch_size=TRAIN_BATCHSIZES, 
                                             shuffle=True, num_workers=TRAIN_NUM_WORKERS, pin_memory=True)
 
-        if torch.cuda.is_available():
-            device = torch.device('cuda')
-            print(' Runing on the GPU...')
-        else:
-            device = torch.device('cpu')
-            print(' Runing on the CPU...')
         
         ########################  Epoch Loop  ##########################################
         self.MODEL.train()
-        self.MODEL.to(device)
         ################  Epoch Clock  #############
         if TRAIN_VERBOSE == 1 or TRAIN_VERBOSE == 2:
             epoch_start = time.time()
@@ -127,8 +131,8 @@ class TrainAndTest():
             load_start = time.time()
             for batch_id, (X_tensor, Y_tensor) in enumerate(trainloader):
             
-                X_input_tensor_gpu = X_tensor.to(device,dtype=torch.float32,non_blocking=True)
-                Y_input_tensor_gpu = Y_tensor.to(device,dtype=torch.float32,non_blocking=True)
+                X_input_tensor_gpu = X_tensor.to(self.DEVICE,dtype=torch.float32,non_blocking=True)
+                Y_input_tensor_gpu = Y_tensor.to(self.DEVICE,dtype=torch.float32,non_blocking=True)
                 ##########  Load&Train Clock  ######
                 if TRAIN_VERBOSE == 2:
                     train_start = load_end = time.time()
@@ -159,8 +163,8 @@ class TrainAndTest():
                 with torch.no_grad():
                     for batch_id, (X_tensor, Y_tensor) in enumerate(validationloader):
 
-                        X_input_tensor_gpu = X_tensor.to(device,dtype=torch.float32,non_blocking=True)
-                        Y_input_tensor_gpu = Y_tensor.to(device,dtype=torch.float32,non_blocking=True)
+                        X_input_tensor_gpu = X_tensor.to(self.DEVICE,dtype=torch.float32,non_blocking=True)
+                        Y_input_tensor_gpu = Y_tensor.to(self.DEVICE,dtype=torch.float32,non_blocking=True)
 
                         self.MODEL.zero_grad()
                         Y_output_tensor_gpu = self.MODEL(X_input_tensor_gpu)
@@ -227,6 +231,8 @@ class TrainAndTest():
         self.MODEL.load_state_dict(MODEL_Dict)
         TEST_recorder_Dict = {}
         TEST_recorder_Dict['EPOCH'] = CHECK_EPOCH
+        self.MODEL.to(self.DEVICE)
+        TEST_LOSS_FN.to(self.DEVICE)
         #创建test结果的保存文件夹
         if not os.path.exists(os.path.join(self.OUTPUT_FOLDER, 'test', 
                     f"model_V{self.READ_VERSION}_epoch_{CHECK_EPOCH}")):
@@ -245,21 +251,14 @@ class TrainAndTest():
             testloader = Data.DataLoader(dataset=testdatasets, batch_size=TEST_BATCHSIZES, 
                                             shuffle=False, num_workers=TEST_NUM_WORKERS, pin_memory=True)
 
-        if torch.cuda.is_available():
-            device = torch.device('cuda')
-            print(' Runing on the GPU...')
-        else:
-            device = torch.device('cpu')
-            print(' Runing on the CPU...')
-
         ########################################  Test Case Loop  #######################################
         self.MODEL.eval()
-        self.MODEL.to(device)
+
         with torch.no_grad():
             for case_id, (X_tensor, Y_tensor) in enumerate(testloader):
 
-                X_input_tensor_gpu = X_tensor.to(device,dtype=torch.float32,non_blocking=True)
-                Y_input_tensor_gpu = Y_tensor.to(device,dtype=torch.float32,non_blocking=True)
+                X_input_tensor_gpu = X_tensor.to(self.DEVICE,dtype=torch.float32,non_blocking=True)
+                Y_input_tensor_gpu = Y_tensor.to(self.DEVICE,dtype=torch.float32,non_blocking=True)
 
                 self.MODEL.zero_grad()
                 Y_output_tensor_gpu = self.MODEL(X_input_tensor_gpu)
@@ -305,7 +304,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(MyTrainAndTest.MODEL.parameters(), lr = LR, weight_decay = 1e-6)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, Train_lambda)
     TRAIN_PARAMS_DICT = {
-                        'EPOCHS' : 10,
+                        'EPOCHS' : 5,
                         'BATCHSIZES' : 144,
                         'LOSS_FN' : nn.L1Loss(),
                         'OPTIMIZER' : optimizer,

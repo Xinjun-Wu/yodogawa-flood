@@ -23,7 +23,7 @@ RANDOM_SEED = 120
 STEP_List = [6, 12, 18, 24, 30, 36]
 #STEP_List = [6]
 CHECKPOINT = None
-#CHECKPOINT = [6, 10] ###STEP == 6 , EPOCH == 5
+CHECKPOINT = [12, 590] ###STEP == 6 , EPOCH == 5
 CHECK_EACH_STEP = False
 
 if CHECKPOINT is not None:

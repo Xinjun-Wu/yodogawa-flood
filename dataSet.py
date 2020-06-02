@@ -205,7 +205,7 @@ class Tensor_DataSet(Data.TensorDataset):
 if __name__ == "__main__":
     mydataset = YodogawaDataSets(6)
     data_info, trainsets = mydataset.select('train', 'mapstyle')
-    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers =3)
+    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers = 8)
 
     start_clock = time.time()
     start_total = start_clock
