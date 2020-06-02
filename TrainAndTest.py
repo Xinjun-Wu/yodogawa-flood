@@ -311,7 +311,7 @@ if __name__ == "__main__":
                         'SCHEDULER' : scheduler,
                         'MODEL_SAVECYCLE' : 1,
                         'RECORDER_SAVECYCLE' : 1,
-                        'NUM_WORKERS' : 0,
+                        'NUM_WORKERS' : 3,
                         'VALIDATION' : True,
                         'VERBOSE' : 2,
                         'TRANSFER' : False,

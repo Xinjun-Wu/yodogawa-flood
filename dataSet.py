@@ -126,8 +126,23 @@ class YodogawaDataSets():
                         }
         if dataset_type == 'mapstyle':
             dataset = Map_style_DataSet(dataset_info)
+            
         elif dataset_type == 'tensorstyle':
-            dataset = Tensor_DataSet(dataset_info)
+            X_Array_List = []
+            y_Array_List = []
+            for case_path in case_path_List:
+                case_data = np.load(case_path)            
+                learning_data = case_data['learning_data']
+                teacher_data = case_data['teacher_data']
+                X_Array_List.append(learning_data)
+                y_Array_List.append(teacher_data)
+
+            X_Array = np.concatenate(tuple(X_Array_List), axis=0)
+            y_Array = np.concatenate(tuple(y_Array_List), axis=0)
+
+            X_Tensor = torch.tensor(X_Array)
+            y_Tensor = torch.tensor(y_Array)
+            dataset = Data.TensorDataset(X_Tensor,y_Tensor)
 
         return dataset_info, dataset
 
@@ -169,43 +184,43 @@ class Map_style_DataSet(Data.Dataset):
         return self.N_SAMPLE_TOTAL
     
 
-class Tensor_DataSet(Data.TensorDataset):
-    def __init__(self, info_Dict):
-        super(Tensor_DataSet).__init__()
-        self.N_CASE = info_Dict['n_case']
-        self.N_SAMPLE_EACHCASE = info_Dict['n_sample_eachcase']
-        self.N_SAMPLE_TOTAL = info_Dict['n_sample_total']
-        self.CASE_INDEX_LIST = info_Dict['case_index_List']
-        self.CASE_PATH_LIST = info_Dict['case_path_List']
+# class Tensor_DataSet(Data.TensorDataset):
+#     def __init__(self, info_Dict):
+#         super(Tensor_DataSet).__init__()
+#         self.N_CASE = info_Dict['n_case']
+#         self.N_SAMPLE_EACHCASE = info_Dict['n_sample_eachcase']
+#         self.N_SAMPLE_TOTAL = info_Dict['n_sample_total']
+#         self.CASE_INDEX_LIST = info_Dict['case_index_List']
+#         self.CASE_PATH_LIST = info_Dict['case_path_List']
 
-        X_Array_List = []
-        y_Array_List = []
-        for case_path in self.CASE_PATH_LIST:
-            case_data = np.load(case_path)            
-            learning_data = case_data['learning_data']
-            teacher_data = case_data['teacher_data']
-            X_Array_List.append(learning_data)
-            y_Array_List.append(teacher_data)
+#         X_Array_List = []
+#         y_Array_List = []
+#         for case_path in self.CASE_PATH_LIST:
+#             case_data = np.load(case_path)            
+#             learning_data = case_data['learning_data']
+#             teacher_data = case_data['teacher_data']
+#             X_Array_List.append(learning_data)
+#             y_Array_List.append(teacher_data)
 
-        X_Array = np.concatenate(tuple(X_Array_List), axis=0)
-        y_Array = np.concatenate(tuple(y_Array_List), axis=0)
+#         X_Array = np.concatenate(tuple(X_Array_List), axis=0)
+#         y_Array = np.concatenate(tuple(y_Array_List), axis=0)
 
-        X_Tensor = torch.tensor(X_Array)
-        y_Tensor = torch.tensor(y_Array)
+#         X_Tensor = torch.tensor(X_Array)
+#         y_Tensor = torch.tensor(y_Array)
 
-        self.tensors = (X_Tensor, y_Tensor)
-    def __getitem__(self, index):
-        return tuple(tensor[index] for tensor in self.tensors)
+#         self.tensors = (X_Tensor, y_Tensor)
+#     def __getitem__(self, index):
+#         return tuple(tensor[index] for tensor in self.tensors)
 
-    def __len__(self):
-        return int(self.N_CASE) * int(self.N_SAMPLE_EACHCASE)
+#     def __len__(self):
+#         return int(self.N_CASE) * int(self.N_SAMPLE_EACHCASE)
 
 
         
 if __name__ == "__main__":
     mydataset = YodogawaDataSets(6)
-    data_info, trainsets = mydataset.select('train', 'mapstyle')
-    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers = 8)
+    data_info, trainsets = mydataset.select('train')
+    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers = 3,pin_memory=True)
 
     start_clock = time.time()
     start_total = start_clock

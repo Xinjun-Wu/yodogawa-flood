@@ -17,13 +17,13 @@ from CNN_models import ConvNet_2
     ###################### Initialize Parameters ####################################
 READ_VERSION = 1
 SAVE_VERSION = 1
-TVT_RATIO = [0.5, 0.3, 0.2]
+TVT_RATIO = [0.1, 0.1, 0.2]
 TEST_SPECIFIC = [10,50]
 RANDOM_SEED = 120
 STEP_List = [6, 12, 18, 24, 30, 36]
 #STEP_List = [6]
 CHECKPOINT = None
-CHECKPOINT = [12, 590] ###STEP == 6 , EPOCH == 5
+#CHECKPOINT = [12, 590] ###STEP == 6 , EPOCH == 5
 CHECK_EACH_STEP = False
 
 if CHECKPOINT is not None:
@@ -57,9 +57,9 @@ for STEP in STEP_List:
                         'SCHEDULER' : scheduler,
                         'MODEL_SAVECYCLE' : 10,
                         'RECORDER_SAVECYCLE' : 100,
-                        'NUM_WORKERS' : 0,
+                        'NUM_WORKERS' : 3,
                         'VALIDATION' : True,
-                        'VERBOSE' : 1,
+                        'VERBOSE' : 2,
                         'TRANSFER' : False,
                         'CHECK_OPTIMIZER' : True,
                         'CHECK_SCHEDULER' : True,
