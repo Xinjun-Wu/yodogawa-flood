@@ -113,6 +113,7 @@ class TrainAndTest():
         
         ########################  Epoch Loop  ##########################################
         self.MODEL.train()
+        self.MODEL.to(device)
         ################  Epoch Clock  #############
         if TRAIN_VERBOSE == 1 or TRAIN_VERBOSE == 2:
             epoch_start = time.time()
