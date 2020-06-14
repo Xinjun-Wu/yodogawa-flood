@@ -73,8 +73,9 @@ class Csv2Npy():
         print(f"Have generated {self.NPY_COUNT} .npy files")
 
 if __name__ == "__main__":
+    NAME = 'Yodogawa'
     INPUT = '../CasesData/'
-    OUTPUT = '../NpyData/'
+    OUTPUT = f'../NpyData/{NAME}'
 
     mynpy = Csv2Npy(INPUT,OUTPUT)
     mynpy.run()

@@ -10,11 +10,11 @@ import torch.optim as optim
 import torch.utils.data as Data
 from tqdm import tqdm
 
-from dataSet import YodogawaDataSets
+from dataSet import CustomizeDataSets
 from CNN_models import ConvNet_2
 
 class TrainAndTest():
-    def __init__(self, model, dataset, input_folder='../Save/Step_6/', output_folder='../Save/Step_6/', 
+    def __init__(self, model, dataset, input_folder='../Save/BP028/Step_6/', output_folder='../Save/BP028/Step_6/', 
                     checkpoint=None, read_version=1, save_version=1):
         self.INPUT_FOLDER = input_folder
         self.OUTPUT_FOLDER = output_folder
@@ -25,7 +25,11 @@ class TrainAndTest():
         self.MODEL = model
         self.DATASET = dataset
         self.STEP = dataset.STEP
+        self.BPNAME = dataset.BPNAME
         self.CHECKPOINT = checkpoint
+        self.CHECKBP = None
+        self.CHECKSTEP = None
+        self.CHECKEPOCH = None
         self.READ_VERSION = read_version
         self.SAVE_VERSION = save_version
         self.TRAIN_PARAMS_DICT = None
@@ -109,13 +113,13 @@ class TrainAndTest():
         ###########################  DataLoader  #######################################
         train_datainfo, traindatasets = self.DATASET.select('train')
         trainloader = Data.DataLoader(dataset=traindatasets, batch_size=TRAIN_BATCHSIZES, 
-                                        shuffle=True, num_workers=TRAIN_NUM_WORKERS, pin_memory=True)
+                                        shuffle=True, num_workers=TRAIN_NUM_WORKERS, pin_memory=True, drop_last=True)
         if TRAIN_VALIDATION:
             validation_datainfo, validationdatasets = self.DATASET.select('validation')
             validationloader = Data.DataLoader(dataset=validationdatasets, batch_size=TRAIN_BATCHSIZES, 
-                                            shuffle=True, num_workers=TRAIN_NUM_WORKERS, pin_memory=True)
+                                            shuffle=True, num_workers=TRAIN_NUM_WORKERS, pin_memory=True, drop_last=True)
 
-        
+    
         ########################  Epoch Loop  ##########################################
         self.MODEL.train()
         ################  Epoch Clock  #############
@@ -148,7 +152,7 @@ class TrainAndTest():
                 if TRAIN_VERBOSE == 2: 
                     load_start = train_end = time.time()
                     train_timeusage = str(timedelta(seconds=train_end) - timedelta(seconds=train_start))
-                    print(f'Epoch : {epoch}, Batch ID : {batch_id}, Load timeusage : {load_timeusage}, Train timeusage : {train_timeusage}')
+                    print(f'Epoch : {epoch}, Batch ID : {batch_id}, Loss ：{loss.item()}, Load timeusage : {load_timeusage}, Train timeusage : {train_timeusage}')
 
             RECORDER_List.append(loss.item())#记录train loss
             TRAIN_SCHEDULER.step()
@@ -181,7 +185,7 @@ class TrainAndTest():
             else:
                 RECORDER_List.append(None)
             RECORDER_PD = RECORDER_PD.append([RECORDER_List], ignore_index=True)#将本轮epoch的记录存起来
-            print(f'Step={self.STEP}, Epoch={epoch}, LR={RECORDER_List[1]}, Train Loss={RECORDER_List[2]}, Validation Loss={RECORDER_List[3]}')
+            print(f'Name={self.BPNAME}, Step={self.STEP}, Epoch={epoch}, LR={RECORDER_List[1]}, Train Loss={RECORDER_List[2]}, Validation Loss={RECORDER_List[3]}')
 
             ################  Epoch Clock  #############    
             if TRAIN_VERBOSE == 1 or TRAIN_VERBOSE == 2:
@@ -223,6 +227,10 @@ class TrainAndTest():
             os.makedirs(os.path.join(self.OUTPUT_FOLDER, 'test'))
         self.TEST_PARAMS_DICT = test_params_Dict
         self.CHECKPOINT = checkpoint
+        if self.CHECKPOINT is not None:
+            self.CHECKBP = self.CHECKPOINT[0]
+            self.CHECKSTEP = self.CHECKPOINT[1]
+            self.CHECKEPOCH = self.CHECKPOINT[2]
 
         TEST_NUM_WORKERS = self.TEST_PARAMS_DICT['NUM_WORKERS']
         TEST_LOSS_FN = self.TEST_PARAMS_DICT['LOSS_FN']
@@ -276,36 +284,37 @@ class TrainAndTest():
                 savepath = os.path.join(self.OUTPUT_FOLDER, 'test', f"model_V{self.READ_VERSION}_epoch_{CHECK_EPOCH}", f'{casename}.npz')
                 np.savez(savepath, input=Y_input_Array, output=Y_output_Array)
                 TEST_recorder_Dict[str(casename)] = [loss.item()]
-                print(f'Model with epoch={CHECK_EPOCH} test loss in {casename} : {loss.item()}')
+                print(f'Model with [Name={self.CHECKBP}, Step={self.CHECKSTEP}, epoch={CHECK_EPOCH}] test loss in {casename} : {loss.item()}')
 
         return TEST_recorder_Dict
 
 
 if __name__ == "__main__":
     ###################### Initialize Parameters ####################################
+    BPNAME = 'Yodogawa'
     STEP = 6
-    INPUT_FOLDER = f'../Save/Step_{STEP}/'
-    OUTPUT_FOLDER = f'../Save/Step_{STEP}/'
-    Data_FOLDER = f'../TrainData/Step_{STEP}/'
+    INPUT_FOLDER = f'../Save/{BPNAME}/Step_{STEP}/'
+    OUTPUT_FOLDER = f'../Save/{BPNAME}/Step_{STEP}/'
+    Data_FOLDER = f'../TrainData/{BPNAME}/Step_{STEP}/'
     READ_VERSION = 1
     SAVE_VERSION = 1
-    TVT_RATIO = [0.2,0.1,0.1]
-    TEST_SPECIFIC = [10, 11]
+    TVT_RATIO = [0.8,0.1,0.1]
+    TEST_SPECIFIC = [10, 12]
     RANDOM_SEED = 120
     CHECKPOINT = None
 
-    mydataset = YodogawaDataSets(STEP, Data_FOLDER, TVT_RATIO, TEST_SPECIFIC, RANDOM_SEED)
+    mydataset = CustomizeDataSets(STEP, Data_FOLDER, TVT_RATIO, TEST_SPECIFIC, RANDOM_SEED,bpname=BPNAME)
     model = ConvNet_2(3+int(STEP/6))
     MyTrainAndTest = TrainAndTest(model, mydataset, INPUT_FOLDER, OUTPUT_FOLDER,
                                     CHECKPOINT, READ_VERSION, SAVE_VERSION)
     ############################## Train Paramters #################################
     LR = 0.001
-    Train_lambda = lambda epoch: 1/np.sqrt(((epoch % 500)+1.0))
+    Train_lambda = lambda epoch: 1/np.sqrt(((epoch % 100)+1.0))
     optimizer = optim.Adam(MyTrainAndTest.MODEL.parameters(), lr = LR, weight_decay = 1e-6)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, Train_lambda)
     TRAIN_PARAMS_DICT = {
                         'EPOCHS' : 5,
-                        'BATCHSIZES' : 144,
+                        'BATCHSIZES' : 2,
                         'LOSS_FN' : nn.L1Loss(),
                         'OPTIMIZER' : optimizer,
                         'SCHEDULER' : scheduler,

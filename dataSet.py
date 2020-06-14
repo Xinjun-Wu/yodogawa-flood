@@ -6,14 +6,15 @@ import random
 import time
 import datetime
 
-class YodogawaDataSets():
-    def __init__(self, step, input_folder='../TrainData/Step_6/',
-                tvt_ratio=[0.5,0.3,0.2], test_specific=[10, 11], random_seed=120):
+class CustomizeDataSets():
+    def __init__(self, step, input_folder='../TrainData/BP028/Step_6/',
+                tvt_ratio=[0.5,0.3,0.2], test_specific=[10, 11], random_seed=120,bpname='BP028'):
         """
         数据将按照tvt_ratio的比例划分train,validdaton,test数据集,指定的test_specific必定在测试集内
 
         """
         self.STEP = step
+        self.BPNAME = bpname
         self.INPUT_FOLDER = input_folder
         self.TVT_RATIO = tvt_ratio
         self.TEST_SPECIFIC = test_specific
@@ -48,7 +49,7 @@ class YodogawaDataSets():
         random.Random(self.RANDOM_SEED).shuffle(casename_List)
 
         self.TRAIN_LIST = casename_List[:N_train]
-        self.VALIDATION_LIST = casename_List[N_train:N_train+N_validation]
+        self.VALIDATION_LIST = casename_List[-N_validation-N_test:-N_test]
         self.TEST_LIST = casename_List[-N_test:]
 
         for s in self.TEST_SPECIFIC:
@@ -218,14 +219,22 @@ class Map_style_DataSet(Data.Dataset):
 
         
 if __name__ == "__main__":
-    mydataset = YodogawaDataSets(6)
+    BPNAME = 'Yodogawa'
+    STEP = 6
+    INPUT_FOLDER = f'../TrainData/{BPNAME}/Step_{STEP}'
+    TVT_RATIO=[0.9,0.3,0.1]
+    TEST_SPECIFIC=[10, 12]
+    RANDOM_SEED=120
+
+    mydataset = CustomizeDataSets(step=6,input_folder=INPUT_FOLDER,tvt_ratio=TVT_RATIO,
+                                    test_specific=TEST_SPECIFIC,random_seed=RANDOM_SEED,bpname=BPNAME)
     data_info, trainsets = mydataset.select('train')
-    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=100, shuffle=True, num_workers = 3,pin_memory=True)
+    traindataloder = Data.DataLoader(dataset=trainsets, batch_size=160, shuffle=True, num_workers = 3,
+                                    pin_memory=True,drop_last=True)
 
     start_clock = time.time()
     start_total = start_clock
     for batch_id, (X_Tensor, y_Tensor) in enumerate(traindataloder):
-
         end_clock = time.time()
         start = datetime.timedelta(seconds=start_clock)
         end = datetime.timedelta(seconds=end_clock)
